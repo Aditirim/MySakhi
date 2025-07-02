@@ -16,7 +16,7 @@ const onboardingData = [
   {
     id: '1',
     title: 'Trusted by millions',
-    description: 'of people part of one part',
+    description: 'of people part of safety Platform',
     image: require('../assets/on1.png'),
   },
   {
@@ -36,12 +36,12 @@ const onboardingData = [
 const OnboardingScreen = (props) => {
   const { navigation } = props;
   const [currentIndex, setCurrentIndex] = useState(0);
-  const swiperRef = useRef(null); // ✅ Step 1: Create ref
+  const swiperRef = useRef(null); 
 
   const handleNext = () => {
     if (currentIndex < onboardingData.length - 1) {
       const nextIndex = currentIndex + 1;
-      swiperRef.current.scrollToIndex({ index: nextIndex }); // ✅ Step 2: Scroll programmatically
+      swiperRef.current.scrollToIndex({ index: nextIndex }); 
       setCurrentIndex(nextIndex);
     } else {
       navigation.replace('SigninScreen');
@@ -51,7 +51,7 @@ const OnboardingScreen = (props) => {
   return (
     <ImageBackground source={require('../assets/bg.jpg')} style={styles.bg}>
       <SwiperFlatList
-        ref={swiperRef} // ✅ Step 3: Attach ref
+        ref={swiperRef} 
         index={0}
         onChangeIndex={({ index }) => setCurrentIndex(index)}
         data={onboardingData}
