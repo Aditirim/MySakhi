@@ -1,6 +1,8 @@
 {
   "buildFiles": [
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\@react-native-async-storage\\async-storage\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\Users\\Aadi123\\MySakhi\\node_modules\\@react-native-google-signin\\google-signin\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\Users\\Aadi123\\MySakhi\\node_modules\\lottie-react-native\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-gesture-handler\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-reanimated\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-safe-area-context\\android\\src\\main\\jni\\CMakeLists.txt",
@@ -69,6 +71,16 @@
         "C:\\Users\\Aadi123\\.gradle\\caches\\8.14.1\\transforms\\2f53968bbb260d34c3de74e387e8e16f\\transformed\\react-android-0.80.1-debug\\prefab\\modules\\jsi\\libs\\android.x86\\libjsi.so",
         "C:\\Users\\Aadi123\\.gradle\\caches\\8.14.1\\transforms\\2f53968bbb260d34c3de74e387e8e16f\\transformed\\react-android-0.80.1-debug\\prefab\\modules\\reactnative\\libs\\android.x86\\libreactnative.so"
       ]
+    },
+    "react_codegen_lottiereactnative::@0fa4dc904d7e359a99fb": {
+      "artifactName": "react_codegen_lottiereactnative",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNGoogleSignInCGen::@337b7b353bd94a4215c0": {
+      "artifactName": "react_codegen_RNGoogleSignInCGen",
+      "abi": "x86",
+      "runtimeFiles": []
     },
     "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe": {
       "artifactName": "react_codegen_rnasyncstorage",

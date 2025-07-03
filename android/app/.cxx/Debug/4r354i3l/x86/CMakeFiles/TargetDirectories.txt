@@ -4,6 +4,12 @@ C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/CMakeFiles/rebuild_
 C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/rnasyncstorage_autolinked_build/CMakeFiles/react_codegen_rnasyncstorage.dir
 C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/rnasyncstorage_autolinked_build/CMakeFiles/edit_cache.dir
 C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/rnasyncstorage_autolinked_build/CMakeFiles/rebuild_cache.dir
+C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/RNGoogleSignInCGen_autolinked_build/CMakeFiles/react_codegen_RNGoogleSignInCGen.dir
+C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/RNGoogleSignInCGen_autolinked_build/CMakeFiles/edit_cache.dir
+C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/RNGoogleSignInCGen_autolinked_build/CMakeFiles/rebuild_cache.dir
+C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/lottiereactnative_autolinked_build/CMakeFiles/react_codegen_lottiereactnative.dir
+C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/lottiereactnative_autolinked_build/CMakeFiles/edit_cache.dir
+C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/lottiereactnative_autolinked_build/CMakeFiles/rebuild_cache.dir
 C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/rngesturehandler_codegen_autolinked_build/CMakeFiles/react_codegen_rngesturehandler_codegen.dir
 C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/rngesturehandler_codegen_autolinked_build/CMakeFiles/edit_cache.dir
 C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/rngesturehandler_codegen_autolinked_build/CMakeFiles/rebuild_cache.dir

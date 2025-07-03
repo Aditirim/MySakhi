@@ -45,6 +45,8 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/armeabi-v7a/rnasyncstorage_autolinked_build/cmake_install.cmake")
+  include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/armeabi-v7a/RNGoogleSignInCGen_autolinked_build/cmake_install.cmake")
+  include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/armeabi-v7a/lottiereactnative_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/armeabi-v7a/rngesturehandler_codegen_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/armeabi-v7a/rnreanimated_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/armeabi-v7a/safeareacontext_autolinked_build/cmake_install.cmake")
