@@ -4,10 +4,12 @@
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\@react-native-google-signin\\google-signin\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\lottie-react-native\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-gesture-handler\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-maps\\android\\src\\main\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-reanimated\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-safe-area-context\\android\\src\\main\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-screens\\android\\src\\main\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-vector-icons\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
+    "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native-webview\\android\\build\\generated\\source\\codegen\\jni\\CMakeLists.txt",
     "C:\\Users\\Aadi123\\MySakhi\\node_modules\\react-native\\ReactAndroid\\cmake-utils\\default-app-setup\\CMakeLists.txt"
   ],
   "cleanCommandsComponents": [
@@ -38,10 +40,20 @@
         "C:\\Users\\Aadi123\\.gradle\\caches\\8.14.1\\transforms\\2f53968bbb260d34c3de74e387e8e16f\\transformed\\react-android-0.80.1-debug\\prefab\\modules\\reactnative\\libs\\android.arm64-v8a\\libreactnative.so"
       ]
     },
+    "react_codegen_RNCWebViewSpec::@eb48929f9f7453740a6c": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "react_codegen_RNCWebViewSpec"
+    },
     "react_codegen_RNGoogleSignInCGen::@337b7b353bd94a4215c0": {
       "toolchain": "toolchain",
       "abi": "arm64-v8a",
       "artifactName": "react_codegen_RNGoogleSignInCGen"
+    },
+    "react_codegen_RNMapsSpecs::@5748abef1962d24942ec": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "react_codegen_RNMapsSpecs"
     },
     "react_codegen_RNVectorIconsSpec::@479809fae146501fd34d": {
       "toolchain": "toolchain",

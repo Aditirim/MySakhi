@@ -1,14 +1,12 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { WebView } from 'react-native-webview';
 
-const ChatbotScreen = () => {
+export default function ChatbotScreen() {
   return (
-    <View>
-      <Text>ChatbotScreen</Text>
-    </View>
-  )
+    <WebView
+      originWhitelist={['*']}
+      source={{ uri: 'file:///android_asset/bot.html' }}
+      style={{ flex: 1 }}
+    />
+  );
 }
-
-export default ChatbotScreen
-
-const styles = StyleSheet.create({})

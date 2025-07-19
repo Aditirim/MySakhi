@@ -112,6 +112,31 @@ if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   file(TOUCH_NOCREATE "C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/CMakeFiles/cmake.verify_globs")
 endif()
 
+# react_codegen_SRCS at C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/*.cpp")
+set(OLD_GLOB
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/RNMapsSpecs-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/react/renderer/components/RNMapsSpecs/*.cpp")
+set(OLD_GLOB
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/react/renderer/components/RNMapsSpecs/ComponentDescriptors.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/react/renderer/components/RNMapsSpecs/EventEmitters.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/react/renderer/components/RNMapsSpecs/Props.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/react/renderer/components/RNMapsSpecs/RNMapsSpecsJSI-generated.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/react/renderer/components/RNMapsSpecs/ShadowNodes.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-maps/android/src/main/jni/react/renderer/components/RNMapsSpecs/States.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/CMakeFiles/cmake.verify_globs")
+endif()
+
 # react_codegen_SRCS at C:/Users/Aadi123/MySakhi/node_modules/react-native-reanimated/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
 file(GLOB NEW_GLOB LIST_DIRECTORIES true "C:/Users/Aadi123/MySakhi/node_modules/react-native-reanimated/android/build/generated/source/codegen/jni/*.cpp")
 set(OLD_GLOB
@@ -252,6 +277,31 @@ set(OLD_GLOB
   "C:/Users/Aadi123/MySakhi/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/RNVectorIconsSpecJSI-generated.cpp"
   "C:/Users/Aadi123/MySakhi/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/ShadowNodes.cpp"
   "C:/Users/Aadi123/MySakhi/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni/react/renderer/components/RNVectorIconsSpec/States.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/*.cpp")
+set(OLD_GLOB
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/RNCWebViewSpec-generated.cpp"
+  )
+if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
+  message("-- GLOB mismatch!")
+  file(TOUCH_NOCREATE "C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86/CMakeFiles/cmake.verify_globs")
+endif()
+
+# react_codegen_SRCS at C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/CMakeLists.txt:9 (file)
+file(GLOB NEW_GLOB LIST_DIRECTORIES true "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/react/renderer/components/RNCWebViewSpec/*.cpp")
+set(OLD_GLOB
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/react/renderer/components/RNCWebViewSpec/ComponentDescriptors.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/react/renderer/components/RNCWebViewSpec/EventEmitters.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/react/renderer/components/RNCWebViewSpec/Props.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/react/renderer/components/RNCWebViewSpec/RNCWebViewSpecJSI-generated.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/react/renderer/components/RNCWebViewSpec/ShadowNodes.cpp"
+  "C:/Users/Aadi123/MySakhi/node_modules/react-native-webview/android/build/generated/source/codegen/jni/react/renderer/components/RNCWebViewSpec/States.cpp"
   )
 if(NOT "${NEW_GLOB}" STREQUAL "${OLD_GLOB}")
   message("-- GLOB mismatch!")

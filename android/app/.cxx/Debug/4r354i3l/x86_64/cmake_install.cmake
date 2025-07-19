@@ -48,10 +48,12 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/RNGoogleSignInCGen_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/lottiereactnative_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/rngesturehandler_codegen_autolinked_build/cmake_install.cmake")
+  include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/RNMapsSpecs_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/rnreanimated_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/safeareacontext_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/rnscreens_autolinked_build/cmake_install.cmake")
   include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/RNVectorIconsSpec_autolinked_build/cmake_install.cmake")
+  include("C:/Users/Aadi123/MySakhi/android/app/.cxx/Debug/4r354i3l/x86_64/RNCWebViewSpec_autolinked_build/cmake_install.cmake")
 
 endif()
 

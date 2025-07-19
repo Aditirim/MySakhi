@@ -4,23 +4,28 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   Vibration,
   PermissionsAndroid,
   NativeModules,
   ScrollView,
+  TouchableWithoutFeedback,
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from 'react-native-geolocation-service';
 import SmsAndroid from 'react-native-get-sms-android';
+import LottieView from 'lottie-react-native';
+
 
 const { AutoCall, AutoSMS } = NativeModules;
+const { width, height } = Dimensions.get('window');
 
 const EmergencyScreen = () => {
   const [contacts, setContacts] = useState(['', '', '']);
   const sosTimer = useRef(null);
   const safeTimer = useRef(null);
+  const backgroundAnim = useRef(null);
 
   useEffect(() => {
     const loadContacts = async () => {
@@ -38,23 +43,16 @@ const EmergencyScreen = () => {
   const requestPermissions = async () => {
     try {
       const callGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CALL_PHONE,
-        { title: 'Call Permission', message: 'SheSafe needs access to make calls.', buttonPositive: 'OK' }
+        PermissionsAndroid.PERMISSIONS.CALL_PHONE
       );
-
       const smsGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.SEND_SMS,
-        { title: 'SMS Permission', message: 'SheSafe needs permission to send SMS.', buttonPositive: 'OK' }
+        PermissionsAndroid.PERMISSIONS.SEND_SMS
       );
-
       const readSmsGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_SMS,
-        { title: 'Read SMS Permission', message: 'SheSafe needs permission to read SMS.', buttonPositive: 'OK' }
+        PermissionsAndroid.PERMISSIONS.READ_SMS
       );
-
       const locGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        { title: 'Location Permission', message: 'SheSafe needs location access.', buttonPositive: 'OK' }
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
 
       return (
@@ -81,22 +79,14 @@ const EmergencyScreen = () => {
 
   const readRideDetailsFromSMS = () => {
     return new Promise((resolve, reject) => {
-      const filter = {
-        box: 'inbox',
-        maxCount: 20,
-      };
-
+      const filter = { box: 'inbox', maxCount: 20 };
       SmsAndroid.list(
         JSON.stringify(filter),
-        (fail) => {
-          console.log('Failed to read SMS:', fail);
-          reject('Failed to read SMS');
-        },
+        (fail) => reject('Failed to read SMS'),
         (count, smsList) => {
           try {
-            let messages = JSON.parse(smsList);
+            const messages = JSON.parse(smsList);
             messages.sort((a, b) => b.date - a.date);
-
             const rideMsg = messages.find(
               (msg) =>
                 msg.body &&
@@ -104,12 +94,10 @@ const EmergencyScreen = () => {
                   msg.body.toLowerCase().includes('uber') ||
                   msg.body.toLowerCase().includes('rapido'))
             );
-
             if (rideMsg) {
               const vehicleMatch = rideMsg.body.match(/vehicle\s*number\s*[:\-]?\s*([A-Z0-9-]+)/i);
               const driverMatch = rideMsg.body.match(/driver\s*name\s*[:\-]?\s*([A-Za-z\s]+)/i);
               const phoneMatch = rideMsg.body.match(/(\+91\d{10}|\d{10})/);
-
               resolve({
                 driverName: driverMatch?.[1]?.trim() ?? 'Not Found',
                 vehicleNumber: vehicleMatch?.[1]?.trim() ?? 'Not Found',
@@ -119,7 +107,6 @@ const EmergencyScreen = () => {
               resolve({ driverName: 'Not Found', vehicleNumber: 'Not Found', driverPhone: 'Not Found' });
             }
           } catch (e) {
-            console.error('Error parsing smsList:', e);
             reject('Error parsing SMS list');
           }
         }
@@ -137,9 +124,7 @@ const EmergencyScreen = () => {
 
       const coords = await getLocation();
       const rideDetails = await readRideDetailsFromSMS();
-
       Vibration.vibrate([500, 500, 500]);
-      Alert.alert('SOS Sent', 'Emergency alerts sent to contacts.');
 
       const validContacts = contacts.filter(
         num => num && num.trim().length >= 10 && /^\d+$/.test(num.trim())
@@ -153,35 +138,25 @@ const EmergencyScreen = () => {
         const number = numberRaw.trim().replace(/[^0-9]/g, '');
         try {
           await AutoSMS.sendSMS(number, message);
-          console.log(`✅ SMS sent to ${number}`);
         } catch (e) {
-          console.error(`❌ Failed to send SMS to ${number}:`, e);
+          console.error(`Failed to send SMS to ${number}:`, e);
         }
       }
 
       const callContact = async (index) => {
         if (index >= validContacts.length) return;
-
         const number = validContacts[index].trim().replace(/[^0-9]/g, '');
-        if (!/^\d{10,}$/.test(number)) {
-          setTimeout(() => callContact(index + 1), 1000);
-          return;
-        }
-
         try {
-          console.log(`📞 Auto-calling ${number}`);
           await AutoCall.makeCall(number);
         } catch (err) {
-          console.error(`❌ AutoCall failed to ${number}:`, err.message);
+          console.error(`AutoCall failed to ${number}:`, err.message);
         }
-
         setTimeout(() => callContact(index + 1), 7000);
       };
 
       callContact(0);
-
+      Alert.alert('SOS Sent', 'Emergency alerts sent to contacts.');
     } catch (err) {
-      console.error('SOS error:', err);
       Alert.alert('Error', 'Something went wrong during SOS.');
     }
   };
@@ -205,91 +180,139 @@ const EmergencyScreen = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Emergency Contacts</Text>
+    <View style={styles.fullScreen}>
+      {/* Background Lottie */}
+      <LottieView
+        source={require('../assets/homebg.json')}
+        autoPlay
+        loop
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+        ref={backgroundAnim}
+      />
 
-      {contacts.map((num, index) => (
-        <TextInput
-          key={index}
-          style={styles.input}
-          keyboardType="phone-pad"
-          placeholder={`Contact ${index + 1}`}
-          value={num}
-          onChangeText={(text) => {
-            const newContacts = [...contacts];
-            newContacts[index] = text;
-            setContacts(newContacts);
-          }}
+      <ScrollView contentContainerStyle={styles.overlay}>
+        {/* Header Animation */}
+        <LottieView
+          source={require('../assets/danger.json')}
+          autoPlay
+          loop
+          style={styles.headerAnimation}
         />
-      ))}
 
-      <TouchableOpacity style={styles.saveBtn} onPress={saveContacts}>
-        <Text style={styles.saveText}>Save Contacts</Text>
-      </TouchableOpacity>
+        <Text style={styles.mainHeading}>Are you in Danger?</Text>
+        <Text style={styles.subHeading}>Save your contacts and alert them in emergencies</Text>
+        <LottieView
+          source={require('../assets/cab.json')}
+          autoPlay
+          loop
+          style={styles.headerAnimation}
+        />
 
-      <TouchableOpacity
-        style={styles.sosBtn}
-        onPressIn={() => handleLongPress('sos')}
-        onPressOut={() => cancelLongPress('sos')}
-      >
-        <Text style={styles.btnText}>HOLD for 10s to SEND SOS</Text>
-      </TouchableOpacity>
+        {contacts.map((num, index) => (
+          <TextInput
+            key={index}
+            style={styles.input}
+            keyboardType="phone-pad"
+            placeholder={`Contact ${index + 1}`}
+            value={num}
+            onChangeText={(text) => {
+              const newContacts = [...contacts];
+              newContacts[index] = text;
+              setContacts(newContacts);
+            }}
+          />
+        ))}
 
-      <TouchableOpacity
-        style={styles.safeBtn}
-        onPressIn={() => handleLongPress('safe')}
-        onPressOut={() => cancelLongPress('safe')}
-      >
-        <Text style={styles.btnText}>HOLD for 10s to SAY SAFE</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableWithoutFeedback onPress={saveContacts}>
+          <View style={styles.saveBtn}>
+            <Text style={styles.saveText}>Save Contacts</Text>
+          </View>
+        </TouchableWithoutFeedback>
+
+        {/* SOS Lottie (acts like a button) */}
+        <TouchableWithoutFeedback
+          onPressIn={() => handleLongPress('sos')}
+          onPressOut={() => cancelLongPress('sos')}
+        >
+          <LottieView
+            source={require('../assets/sos.json')}
+            autoPlay
+            loop
+            style={styles.actionButton}
+          />
+        </TouchableWithoutFeedback>
+
+        {/* SAFE Lottie (acts like a button) */}
+        <TouchableWithoutFeedback
+          onPressIn={() => handleLongPress('safe')}
+          onPressOut={() => cancelLongPress('safe')}
+        >
+          <LottieView
+            source={require('../assets/safe.json')}
+            autoPlay
+            loop
+            style={styles.actionButton}
+          />
+        </TouchableWithoutFeedback>
+      </ScrollView>
+    </View>
   );
 };
 
 export default EmergencyScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  fullScreen: {
+    flex: 1,
+    backgroundColor: '#000', // fallback background
+  },
+  overlay: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: '#fff',
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 22,
+  headerAnimation: {
+    width: 200,
+    height: 200,
+    marginBottom: 10,
+  },
+  mainHeading: {
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 12,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  subHeading: {
+    fontSize: 16,
+    color: '#eee',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#aaa',
+    backgroundColor: '#fff',
+    width: '90%',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 12,
-    padding: 10,
-    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
   },
   saveBtn: {
-    backgroundColor: '#6c757d',
+    backgroundColor: '#00796b',
     padding: 12,
+    borderRadius: 8,
     marginBottom: 20,
-    borderRadius: 6,
+    width: '60%',
   },
   saveText: {
     color: '#fff',
     textAlign: 'center',
-  },
-  sosBtn: {
-    backgroundColor: '#dc3545',
-    padding: 18,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  safeBtn: {
-    backgroundColor: '#28a745',
-    padding: 18,
-    borderRadius: 10,
-  },
-  btnText: {
-    color: '#fff',
-    textAlign: 'center',
     fontWeight: 'bold',
+  },
+  actionButton: {
+    width: width * 0.6,
+    height: 120,
+    marginBottom: 20,
   },
 });

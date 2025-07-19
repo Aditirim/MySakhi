@@ -119,6 +119,7 @@ dependencies {
     }
     implementation 'com.google.firebase:firebase-firestore:24.10.2'
     implementation 'com.google.firebase:firebase-auth:22.3.1'
+    implementation "com.google.android.gms:play-services-location:${rootProject.ext.googlePlayServicesVersion}"
 
 }
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"

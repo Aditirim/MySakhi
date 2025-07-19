@@ -29,23 +29,22 @@ const BottomTabNavigator = () => {
             case 'Chatbot':
               iconName = 'chatbubble-ellipses-outline';
               break;
-            case 'Safety':
-              iconName = 'shield-checkmark-outline';
-              break;
+            
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#d63384',
+        tabBarActiveTintColor: '#00796b',
         tabBarInactiveTintColor: 'gray',
         headerShown: false,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="News" component={NewsScreen} />
       <Tab.Screen name="Emergency" component={EmergencyScreen} />
+      <Tab.Screen name="News" component={NewsScreen} />
+      
       <Tab.Screen name="Chatbot" component={ChatbotScreen} />
-      <Tab.Screen name="Safety" component={SafetyScreen} />
+
     </Tab.Navigator>
   );
 };

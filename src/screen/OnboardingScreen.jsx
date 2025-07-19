@@ -1,4 +1,3 @@
-// src/screens/OnboardingScreen.js
 import React, { useRef, useState } from 'react';
 import {
   View,
@@ -7,9 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  Animated,
-  Image,
 } from 'react-native';
+import LottieView from 'lottie-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,59 +16,31 @@ const slides = [
     key: '1',
     title: 'Welcome to SheRaksha',
     subtitle: 'Your own Suraksha companion',
-    image: require('../assets/logo.png'),
+    lottie: require('../assets/car.json'),
   },
   {
     key: '2',
     title: 'Made by Women, for Women',
     subtitle: 'Built for strength, safety & solidarity',
-    image: require('../assets/onboard1.jpg'),
+    lottie: require('../assets/million.json'),
   },
   {
     key: '3',
     title: 'Trusted by Millions',
     subtitle: 'Join our growing sisterhood of safety',
-    image: require('../assets/onboard2.jpg'),
+    lottie: require('../assets/trusted.json'),
   },
   {
     key: '4',
     title: 'Drop the Fear at the Pickup Point',
     subtitle: 'Be fearless. Be SheRaksha.',
-    image: require('../assets/onboard3.jpg'),
+    lottie: require('../assets/cab.json'),
   },
 ];
 
 const OnboardingScreen = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef();
-
-  const imageScale = useRef(new Animated.Value(0)).current;
-  const headingTranslate = useRef(new Animated.Value(-50)).current;
-  const headingOpacity = useRef(new Animated.Value(0)).current;
-
-  const triggerAnimation = () => {
-    imageScale.setValue(0);
-    headingTranslate.setValue(-50);
-    headingOpacity.setValue(0);
-
-    Animated.parallel([
-      Animated.spring(imageScale, {
-        toValue: 1,
-        friction: 4,
-        useNativeDriver: true,
-      }),
-      Animated.timing(headingTranslate, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(headingOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
 
   const handleNext = () => {
     if (currentIndex < slides.length - 1) {
@@ -86,22 +56,12 @@ const OnboardingScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.slide}>
-      <Animated.Image
-        source={require('../assets/heading1.png')}
-        style={[
-          styles.headingImage,
-          {
-            transform: [{ translateY: headingTranslate }],
-            opacity: headingOpacity,
-          },
-        ]}
+      <LottieView
+        source={item.lottie}
+        autoPlay
+        loop
+        style={styles.centerAnimation}
       />
-
-      <Animated.Image
-        source={item.image}
-        style={[styles.image, { transform: [{ scale: imageScale }] }]}
-      />
-
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.subtitle}>{item.subtitle}</Text>
 
@@ -116,7 +76,7 @@ const OnboardingScreen = ({ navigation }) => {
               key={i}
               style={[
                 styles.dot,
-                { backgroundColor: i === currentIndex ? '#4FC3F7' : '#ccc' },
+                { backgroundColor: i === currentIndex ? '#00796b' : '#ccc' },
               ]}
             />
           ))}
@@ -133,6 +93,15 @@ const OnboardingScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Background Animation */}
+      <LottieView
+        source={require('../assets/homebg.json')}
+        autoPlay
+        loop
+        resizeMode="cover"
+        style={StyleSheet.absoluteFill}
+      />
+
       <FlatList
         data={slides}
         ref={flatListRef}
@@ -143,12 +112,8 @@ const OnboardingScreen = ({ navigation }) => {
         showsHorizontalScrollIndicator={false}
         onScroll={(e) => {
           const index = Math.round(e.nativeEvent.contentOffset.x / width);
-          if (index !== currentIndex) {
-            setCurrentIndex(index);
-            triggerAnimation();
-          }
+          setCurrentIndex(index);
         }}
-        onMomentumScrollEnd={triggerAnimation}
       />
     </View>
   );
@@ -157,7 +122,7 @@ const OnboardingScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFEFF',
+    backgroundColor: '#eafcff',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -168,28 +133,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
   },
-  headingImage: {
-    width: width * 0.9,
-    height: 90,
-    resizeMode: 'contain',
-    marginBottom: 10,
-  },
-  image: {
-    width: width * 0.9,
-    height: height * 0.45,
-    resizeMode: 'contain',
+  centerAnimation: {
+    width: width * 0.7,
+    height: height * 0.4,
     marginBottom: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#01579B',
+    color: '#00796b',
     textAlign: 'center',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#0277BD',
+    color: '#00796b',
     textAlign: 'center',
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -203,7 +161,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   button: {
-    backgroundColor: '#4FC3F7',
+    backgroundColor: '#00796b',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
