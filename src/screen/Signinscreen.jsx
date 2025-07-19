@@ -150,11 +150,10 @@ const SignupScreen = ({ navigation }) => {
             </TouchableOpacity>
 
            <View style={styles.orContainer}>
-  <View style={styles.line} />
-  <Text style={styles.orText}>Or continue with</Text>
-  <View style={styles.line} />
-</View>
-
+            <View style={styles.line} />
+            <Text style={styles.orText}>Or continue with</Text>
+            <View style={styles.line} />
+          </View>
 
             <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleButton}>
               <AntDesign name="google" size={22} color="#fff" />
