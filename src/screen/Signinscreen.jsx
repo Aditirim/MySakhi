@@ -149,7 +149,12 @@ const SignupScreen = ({ navigation }) => {
               <Text style={styles.buttonText}>Sign Up</Text>
             </TouchableOpacity>
 
-            <Text style={styles.orTextCenter}>Or continue with</Text>
+           <View style={styles.orContainer}>
+  <View style={styles.line} />
+  <Text style={styles.orText}>Or continue with</Text>
+  <View style={styles.line} />
+</View>
+
 
             <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleButton}>
               <AntDesign name="google" size={22} color="#fff" />
@@ -267,13 +272,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
   },
-  orTextCenter: {
-    textAlign: 'center',
-    color: '#555',
-    fontSize: 15,
-    marginTop: 20,
-    marginBottom: 10,
-  },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -282,7 +280,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 25,
     marginTop: 10,
-    marginHorizontal: 60,
+    marginHorizontal: 20,
     shadowColor: '#00796b',
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 4 },
@@ -309,4 +307,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
   },
+  orContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginVertical: 20,
+},
+line: {
+  flex: 1,
+  height: 1,
+  backgroundColor: '#ccc',
+},
+orText: {
+  marginHorizontal: 10,
+  color: '#555',
+  fontSize: 15,
+  fontWeight: '500',
+},
 });
