@@ -13,7 +13,8 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import LottieView from 'lottie-react-native'; // <- Import Lottie
+import LottieView from 'lottie-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -23,6 +24,8 @@ const SignupScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState(''); // ✅ NEW
+
   const [secureText, setSecureText] = useState(true);
 
   useEffect(() => {
@@ -31,51 +34,71 @@ const SignupScreen = ({ navigation }) => {
     });
   }, []);
 
-  const handleSignup = async () => {
-    if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill all fields');
-      return;
-    }
+ const handleSignup = async () => {
+  if (!name || !email || !password || !phone) {
+    Alert.alert('Error', 'Please fill all fields');
+    return;
+  }
 
-    try {
-      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
-      const { uid } = userCredential.user;
+  try {
+    const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+    const { uid } = userCredential.user;
 
-      await firestore().collection('users').doc(uid).set({
-        name,
-        email,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-      });
+    await firestore().collection('users').doc(uid).set({
+      name,
+      email,
+      phone,
+      createdAt: firestore.FieldValue.serverTimestamp(),
+    });
 
-      Alert.alert('Success', 'Account created!');
-      navigation.navigate('LoginScreen');
-    } catch (error) {
-      console.log('Signup error:', error);
-      Alert.alert('Error', error.message);
-    }
-  };
+    // ✅ Store phone number locally for tracking
+    await AsyncStorage.setItem('phone', phone);
 
-  const handleGoogleSignIn = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const googleCredential = auth.GoogleAuthProvider.credential(userInfo.idToken);
-      const userSignIn = await auth().signInWithCredential(googleCredential);
+    Alert.alert('Success', 'Account created!');
+    navigation.navigate('LoginScreen');
+  } catch (error) {
+    console.log('Signup error:', error);
+    Alert.alert('Error', error.message);
+  }
+};
 
-      const { uid, displayName, email } = userSignIn.user;
-      await firestore().collection('users').doc(uid).set({
-        name: displayName,
-        email,
-        createdAt: firestore.FieldValue.serverTimestamp(),
-      });
+const handleGoogleSignIn = async () => {
+  try {
+    await GoogleSignin.hasPlayServices();
+    const userInfo = await GoogleSignin.signIn();
+    const googleCredential = auth.GoogleAuthProvider.credential(userInfo.idToken);
+    const userSignIn = await auth().signInWithCredential(googleCredential);
 
-      Alert.alert('Success', 'Signed in with Google!');
-      navigation.navigate('LoginScreen');
-    } catch (error) {
-      console.log('Google Sign-In Error:', error);
-      Alert.alert('Error', 'Google sign-in failed.');
-    }
-  };
+    const { uid, displayName, email } = userSignIn.user;
+
+    // Ask user for phone number
+    Alert.prompt(
+      'Enter Phone Number',
+      'This is required for location tracking during emergencies.',
+      async (phoneInput) => {
+        if (!phoneInput) {
+          Alert.alert('Error', 'Phone number is required!');
+          return;
+        }
+
+        await firestore().collection('users').doc(uid).set({
+          name: displayName,
+          email,
+          phone: phoneInput, // ✅ Save phone
+          createdAt: firestore.FieldValue.serverTimestamp(),
+        });
+
+        await AsyncStorage.setItem('phone', phoneInput); // Optional
+
+        Alert.alert('Success', 'Signed in with Google!');
+        navigation.navigate('LoginScreen');
+      }
+    );
+  } catch (error) {
+    console.log('Google Sign-In Error:', error);
+    Alert.alert('Error', 'Google sign-in failed.');
+  }
+};
 
   return (
     <View style={styles.background}>
@@ -145,11 +168,28 @@ const SignupScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
+            {/* ✅ Phone input */}
+            <View style={styles.inputContainer}>
+              <FontAwesome name="phone" size={20} color="#999" style={styles.iconStyle} />
+              <TextInput
+                placeholder="Phone Number"
+                placeholderTextColor="#999"
+                style={styles.input}
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={setPhone}
+              />
+            </View>
+
             <TouchableOpacity onPress={handleSignup} style={styles.button}>
               <Text style={styles.buttonText}>Sign Up</Text>
             </TouchableOpacity>
 
-            <Text style={styles.orTextCenter}>Or continue with</Text>
+            <View style={styles.orContainer}>
+              <View style={styles.line} />
+              <Text style={styles.orText}>Or continue with</Text>
+              <View style={styles.line} />
+            </View>
 
             <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleButton}>
               <AntDesign name="google" size={22} color="#fff" />
@@ -267,13 +307,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
   },
-  orTextCenter: {
-    textAlign: 'center',
-    color: '#555',
-    fontSize: 15,
-    marginTop: 20,
-    marginBottom: 10,
-  },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -282,7 +315,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 25,
     marginTop: 10,
-    marginHorizontal: 60,
+    marginHorizontal: 20,
     shadowColor: '#00796b',
     shadowOpacity: 0.4,
     shadowOffset: { width: 0, height: 4 },
@@ -308,5 +341,21 @@ const styles = StyleSheet.create({
     color: '#00796b',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ccc',
+  },
+  orText: {
+    marginHorizontal: 10,
+    color: '#555',
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

@@ -16,11 +16,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from 'react-native-geolocation-service';
 import SmsAndroid from 'react-native-get-sms-android';
 import LottieView from 'lottie-react-native';
-
-
 const { AutoCall, AutoSMS } = NativeModules;
 const { width, height } = Dimensions.get('window');
-
+import { startLiveLocationTracking } from '../utils/LiveLocationService'; // update path if needed
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 const EmergencyScreen = () => {
   const [contacts, setContacts] = useState(['', '', '']);
   const sosTimer = useRef(null);
@@ -115,51 +115,86 @@ const EmergencyScreen = () => {
   };
 
   const triggerSOS = async () => {
-    try {
-      const permsGranted = await requestPermissions();
-      if (!permsGranted) {
-        Alert.alert('Permissions Denied', 'All permissions are required.');
-        return;
-      }
-
-      const coords = await getLocation();
-      const rideDetails = await readRideDetailsFromSMS();
-      Vibration.vibrate([500, 500, 500]);
-
-      const validContacts = contacts.filter(
-        num => num && num.trim().length >= 10 && /^\d+$/.test(num.trim())
-      );
-
-      const locText = coords ? `https://maps.google.com/?q=${coords.latitude},${coords.longitude}` : 'Location not available';
-
-      const message = `I am in danger! Please help me.\nMy location: ${locText}\nDriver: ${rideDetails.driverName}\nVehicle: ${rideDetails.vehicleNumber}\nDriver Phone: ${rideDetails.driverPhone}`;
-
-      for (const numberRaw of validContacts) {
-        const number = numberRaw.trim().replace(/[^0-9]/g, '');
-        try {
-          await AutoSMS.sendSMS(number, message);
-        } catch (e) {
-          console.error(`Failed to send SMS to ${number}:`, e);
-        }
-      }
-
-      const callContact = async (index) => {
-        if (index >= validContacts.length) return;
-        const number = validContacts[index].trim().replace(/[^0-9]/g, '');
-        try {
-          await AutoCall.makeCall(number);
-        } catch (err) {
-          console.error(`AutoCall failed to ${number}:`, err.message);
-        }
-        setTimeout(() => callContact(index + 1), 7000);
-      };
-
-      callContact(0);
-      Alert.alert('SOS Sent', 'Emergency alerts sent to contacts.');
-    } catch (err) {
-      Alert.alert('Error', 'Something went wrong during SOS.');
+  try {
+    const permsGranted = await requestPermissions();
+    if (!permsGranted) {
+      Alert.alert('Permissions Denied', 'All permissions are required.');
+      return;
     }
-  };
+
+    const coords = await getLocation();
+    const rideDetails = await readRideDetailsFromSMS();
+    Vibration.vibrate([500, 500, 500]);
+
+    const validContacts = contacts.filter(
+      num => num && num.trim().length >= 10 && /^\d+$/.test(num.trim())
+    );
+
+    const locText = coords
+      ? `https://maps.google.com/?q=${coords.latitude},${coords.longitude}`
+      : 'Location not available';
+
+    let phoneNumber = null;
+try {
+  const user = auth().currentUser;
+  if (!user) {
+    Alert.alert('Error', 'User not logged in.');
+    return;
+  }
+
+  const userDoc = await firestore().collection('users').doc(user.uid).get();
+  if (userDoc.exists) {
+    phoneNumber = userDoc.data()?.phone ?? user.phoneNumber;
+  } else {
+    phoneNumber = user.phoneNumber;
+  }
+
+  if (!phoneNumber) {
+    Alert.alert('Error', 'Phone number not found in profile.');
+    return;
+  }
+} catch (error) {
+  console.error("Failed to fetch phone number:", error);
+  Alert.alert("Error", "Unable to get your phone number");
+  return;
+}
+
+    const trackingURL = `https://mysakhi.web.app/?phone=${phoneNumber}`;
+
+    const message = `Help! ${locText}\nDriver: ${rideDetails.driverName}\nVehicle: ${rideDetails.vehicleNumber}\nPhone: ${rideDetails.driverPhone}\nLive: ${trackingURL}`;
+
+    for (const numberRaw of validContacts) {
+      const number = numberRaw.trim().replace(/[^0-9]/g, '');
+      try {
+        await AutoSMS.sendSMS(number, message);
+      } catch (e) {
+        console.error(`Failed to send SMS to ${number}:`, e);
+      }
+    }
+
+    const callContact = async (index) => {
+      if (index >= validContacts.length) return;
+      const number = validContacts[index].trim().replace(/[^0-9]/g, '');
+      try {
+        await AutoCall.makeCall(number);
+      } catch (err) {
+        console.error(`AutoCall failed to ${number}:`, err.message);
+      }
+      setTimeout(() => callContact(index + 1), 7000);
+    };
+
+    callContact(0);
+
+    // ✅ Start live location tracking with user's phone number
+    startLiveLocationTracking(phoneNumber)
+
+    Alert.alert('SOS Sent', 'Emergency alerts sent to contacts.');
+  } catch (err) {
+    console.error('🌋 Uncaught error in triggerSOS:', err);
+    Alert.alert('Error', 'Something went wrong during SOS.');
+  }
+};
+
 
   const triggerSafe = () => {
     Vibration.vibrate(500);

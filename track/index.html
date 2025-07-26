@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SheRaksha Live Tracker</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Arial', sans-serif;
+        background-color: #f7f7f7;
+      }
+      #map {
+        height: 100vh;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <!-- Firebase and Firestore Setup -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import {
+        getFirestore,
+        doc,
+        onSnapshot
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBKT-YxWjSoyxI_RRHq4zpm7sjCm6Zhwtg",
+        authDomain: "mysakhi.firebaseapp.com",
+        projectId: "mysakhi",
+        storageBucket: "mysakhi.appspot.com",
+        messagingSenderId: "984527985679",
+        appId: "1:984527985679:web:5f309b338bfb7714fbc88e",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Global map and marker
+      let map, marker;
+
+      window.initMap = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const phone = urlParams.get("phone");
+
+        if (!phone) {
+          alert("No phone number provided in the URL");
+          return;
+        }
+
+        const docRef = doc(db, "liveLocations", phone);
+
+        onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const lat = data.latitude;
+            const lng = data.longitude;
+
+            if (!map) {
+              map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat, lng },
+                zoom: 15,
+              });
+
+              marker = new google.maps.Marker({
+                position: { lat, lng },
+                map,
+                title: "Live Location",
+              });
+            } else {
+              const newPos = new google.maps.LatLng(lat, lng);
+              marker.setPosition(newPos);
+              map.panTo(newPos);
+            }
+          } else {
+            console.warn("No document found for phone:", phone);
+          }
+        }, (error) => {
+          console.error("Error in onSnapshot:", error);
+        });
+      };
+    </script>
+
+    <!-- Google Maps API -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB9CGhbR_nlLMv2hXMBkhLJirXc5-jSbpo&callback=initMap&loading=async"
+      async
+      defer
+    ></script>
+  </body>
+</html>

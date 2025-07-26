@@ -10,10 +10,11 @@ import {
   Switch,
   ActivityIndicator,
 } from 'react-native';
-import { auth, db } from '../../firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import womanAvatar from '../assets/logo.png'; 
 
 const ProfileScreen = ({ navigation }) => {
   const [profileData, setProfileData] = useState(null);
@@ -24,24 +25,19 @@ const ProfileScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        console.log("Current user:", auth.currentUser);
-        if (!auth.currentUser) {
+        const user = auth().currentUser;
+        if (!user) {
           Alert.alert("Error", "User not logged in");
           setLoading(false);
           return;
         }
 
-        const docRef = doc(db, 'users', auth.currentUser.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+        const userDoc = await firestore().collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          const data = userDoc.data();
           setProfileData(data);
-          setRideMonitoring(data.rideMonitoring ?? false);
-          setNotifications(data.notifications ?? false);
-          console.log("Profile data loaded:", data);
-        } else {
-          console.log("No profile document found, showing empty profile.");
+          setRideMonitoring(data?.rideMonitoring ?? false);
+          setNotifications(data?.notifications ?? false);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -56,9 +52,9 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await auth().signOut();
       Alert.alert("Logged out", "You have been logged out");
-      navigation.replace("Login"); // adjust if you use different login screen name
+      navigation.replace("LoginScreen");
     } catch (error) {
       console.error("Error logging out:", error);
       Alert.alert("Error", "Failed to log out");
@@ -66,9 +62,12 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleToggleRideMonitoring = async () => {
+    const user = auth().currentUser;
+    if (!user) return;
     try {
-      const docRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(docRef, { rideMonitoring: !rideMonitoring });
+      await firestore().collection('users').doc(user.uid).update({
+        rideMonitoring: !rideMonitoring,
+      });
       setRideMonitoring(!rideMonitoring);
     } catch (error) {
       console.error("Error updating ride monitoring:", error);
@@ -77,9 +76,12 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleToggleNotifications = async () => {
+    const user = auth().currentUser;
+    if (!user) return;
     try {
-      const docRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(docRef, { notifications: !notifications });
+      await firestore().collection('users').doc(user.uid).update({
+        notifications: !notifications,
+      });
       setNotifications(!notifications);
     } catch (error) {
       console.error("Error updating notifications:", error);
@@ -90,7 +92,7 @@ const ProfileScreen = ({ navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#d63384" />
+        <ActivityIndicator size="large" color="#01787aff" />
         <Text style={{ marginTop: 10, color: '#333' }}>Loading profile...</Text>
       </View>
     );
@@ -98,40 +100,60 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Image
-          source={{ uri: profileData?.photoURL ?? 'https://i.ibb.co/4pDNDk1/avatar.png' }}
-          style={styles.avatar}
-        />
-        <View style={styles.headerText}>
-          <Text style={styles.name}>{profileData?.name ?? 'Your Name'}</Text>
-          <Text style={styles.email}>{profileData?.email ?? auth.currentUser?.email}</Text>
+      <View style={styles.profileCard}>
+  <TouchableOpacity
+    style={styles.editIconTopRight}
+    onPress={() => navigation.navigate("EditProfile")}
+  >
+    <Ionicons name="create-outline" size={26} color="#003b2fff" />
+  </TouchableOpacity>
+
+ <Image source={womanAvatar} style={styles.avatarLarge} />
+
+
+  <Text style={styles.profileName}>{profileData?.name ?? 'Your Name'}</Text>
+  <Text style={styles.profileEmail}>{profileData?.email ?? auth().currentUser?.email}</Text>
+  <Text style={styles.profileEmail}>{profileData?.phone ?? auth().currentUser?.email}</Text>
+  </View>
+
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.iconTitleRow}>
+    <Ionicons name="call-outline" size={21} color="#374151" style={{ marginRight: 6 ,marginBottom: 6}} />
+    <Text style={styles.sectionTitle}>Emergency Contacts</Text>
+    </View>
+         <TouchableOpacity
+      onPress={() => navigation.navigate('EditEmergencyContacts')}
+      style={styles.editIconBtn}
+    >
+      <Ionicons name="create-outline" size={22} color="#001a1cff" />
+    </TouchableOpacity>
+
         </View>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => navigation.navigate("EditProfile")} // make sure you have EditProfile screen
-        >
-          <Text style={styles.editButtonText}>Edit</Text>
-        </TouchableOpacity>
+      <View style={styles.itemRow}>
+          <Ionicons name="location-outline" size={18} color="#374151" style={{ marginRight: 8,marginBottom:8 }} />
+          <Text style={styles.itemText}>Home Address: <Text >Sector-52, Noida</Text></Text>
+        </View>
+        <View style={styles.itemRow}>
+          <Ionicons name="person-outline" size={18} color="#374151" style={{ marginRight: 8 }} />
+          <Text style={styles.itemText}>Phone No: {profileData?.gender ?? '9843673421'}</Text>
+      </View>
+
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🚨 Emergency Contacts</Text>
-        <TouchableOpacity onPress={() => navigation.navigate("EditContacts")}>
-          <Text style={styles.editLink}>Edit</Text>
-        </TouchableOpacity>
-        <Text style={styles.itemText}>📍 Home Address: <Text style={styles.link}>Set Location</Text></Text>
-        <Text style={styles.itemText}>👤 Gender: {profileData?.gender ?? 'Not Set'}</Text>
-      </View>
+          <View style={styles.iconTitleRow}>
+      <Ionicons name="settings-outline" size={20} color="#374151" style={{ marginRight: 6 ,marginBottom: 8 }} />
+      <Text style={styles.sectionTitle}>Preferences</Text>
+    </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚙️ Preferences</Text>
         <View style={styles.switchRow}>
           <Text style={styles.switchLabel}>Ride Monitoring</Text>
           <Switch
             value={rideMonitoring}
             onValueChange={handleToggleRideMonitoring}
-            thumbColor={rideMonitoring ? "#d63384" : "#ccc"}
+            thumbColor={rideMonitoring ? "#00796b" : "#ccc"}
           />
         </View>
         <View style={styles.switchRow}>
@@ -139,14 +161,22 @@ const ProfileScreen = ({ navigation }) => {
           <Switch
             value={notifications}
             onValueChange={handleToggleNotifications}
-            thumbColor={notifications ? "#d63384" : "#ccc"}
+            thumbColor={notifications ? "#00796b" : "#ccc"}
           />
         </View>
-        <Text style={styles.itemText}>🌐 Language: English ▼</Text>
+            <View style={styles.itemRow}>
+        <Ionicons name="language-outline" size={18} color="#374151" style={{ marginRight: 8 ,marginBottom: 8 }} />
+        <Text style={styles.itemText}>Language: English ▼</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔒 Security</Text>
+      </View>
+
+            <View style={styles.section}>
+            <View style={styles.iconTitleRow}>
+        <Ionicons name="lock-closed-outline" size={20} color="#374151" style={{ marginRight: 4,marginBottom: 10 }} />
+        <Text style={styles.sectionTitle}>Security</Text>
+      </View>
+
         <TouchableOpacity onPress={() => navigation.navigate("ChangePassword")}>
           <Text style={styles.link}>Change Password</Text>
         </TouchableOpacity>
@@ -156,14 +186,18 @@ const ProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>ℹ️ About SheRaksha</Text>
+            <View style={styles.iconTitleRow}>
+      <Ionicons name="information-circle-outline" size={22} color="#374151" style={{ marginRight: 5,marginBottom:8 }} />
+      <Text style={styles.sectionTitle}>About SheRaksha</Text>
+    </View>
+
         <TouchableOpacity onPress={() => Alert.alert("Support", "Contact us at support@sheraksha.com")}>
           <Text style={styles.link}>Contact Support</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="logout" size={20} color="#d63384" />
+        <Icon name="logout" size={20} color="#fff" />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -175,98 +209,125 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: "#eafcff",
+    flexGrow: 1,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#a6e5f1ff",
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+  profileCard: {
+    backgroundColor: "#fff",
+    alignItems: "center",
+    paddingVertical: 25,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    marginBottom: 10,
+    elevation: 9,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
-  avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 2,
-    borderColor: '#d63384',
+  avatarLarge: {
+  width: 120,
+  height: 120,
+  borderRadius: 75,
+  marginBottom: 14,
+  borderColor: '#026f62ff', 
+  borderWidth: 3,          
+},
+
+  profileName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 4,
   },
-  headerText: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#d63384',
-  },
-  email: {
-    fontSize: 14,
-    color: '#555',
-  },
-  editButton: {
-    backgroundColor: '#d63384',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  editButtonText: {
-    color: '#fff',
-    fontSize: 14,
+  profileEmail: {
+    fontSize: 15,
+    fontWeight:500,
+    color: "#424244ff",
   },
   section: {
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    elevation: 2,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 1,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  editLink: {
-    position: 'absolute',
-    right: 15,
-    top: 15,
-    color: '#0d6efd',
-    fontSize: 14,
-  },
-  itemText: {
-    fontSize: 14,
-    marginBottom: 6,
-    color: '#333',
-  },
-  link: {
-    color: '#0d6efd',
-  },
-  switchRow: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#374151",
+    marginBottom: 8,
+  },
+ 
+  itemText: {
+    fontSize: 15,
+    fontWeight:400,
+    color: "#29364aff",
+    marginBottom: 8,
+  },
+  link: {
+    color: "#1f19caa8",
+    // fontWeight: "500",
+    fontSize:16,
+    marginBottom:8,
+  },
+  switchRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
   },
   switchLabel: {
-    fontSize: 14,
-    color: '#333',
+    fontSize: 15,
+    color: "#242f3fff",
+    fontWeight:400,
   },
   logoutButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#d63384',
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 40,
+    backgroundColor: "#d00303ff",
+    borderWidth: 4,
+    borderColor: "#e0e0e0ff",
   },
   logoutText: {
-    marginLeft: 6,
-    color: '#d63384',
-    fontWeight: 'bold',
+    color: "#ffffffff",
+    fontSize: 20,
+    fontWeight: "600",
+    marginLeft: 8,
   },
+  editIconTopRight: {
+  position: 'absolute',
+  top: 12,
+  right: 12,
+  padding: 6,
+  borderRadius: 30,
+  zIndex: 10,
+},
+iconTitleRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 4,
+},
+itemRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+
 });
