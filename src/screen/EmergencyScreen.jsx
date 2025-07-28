@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState,useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,61 +6,99 @@ import {
   StyleSheet,
   Alert,
   Vibration,
+  Animated,
   PermissionsAndroid,
   NativeModules,
   ScrollView,
   TouchableWithoutFeedback,
   Dimensions,
+  TouchableOpacity,
+  ToastAndroid,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from 'react-native-geolocation-service';
 import SmsAndroid from 'react-native-get-sms-android';
 import LottieView from 'lottie-react-native';
-const { AutoCall, AutoSMS } = NativeModules;
-const { width, height } = Dimensions.get('window');
-import { startLiveLocationTracking } from '../utils/LiveLocationService'; // update path if needed
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { startLiveLocationTracking } from '../utils/LiveLocationService';
+import RNShake from 'react-native-shake';
+import { useFocusEffect } from '@react-navigation/native'
+import Icon from 'react-native-vector-icons/MaterialIcons'; 
+
+
+const { AutoCall, AutoSMS } = NativeModules;
+const { width } = Dimensions.get('window');
+
 const EmergencyScreen = () => {
-  const [contacts, setContacts] = useState(['', '', '']);
-  const sosTimer = useRef(null);
-  const safeTimer = useRef(null);
+  const [contacts, setContacts] = useState([{ name: '', phone: '' }]);
+  const [isHoldingSOS, setIsHoldingSOS] = useState(false);
+  const sosProgress = useRef(new Animated.Value(0)).current;
   const backgroundAnim = useRef(null);
+  const [safetyMode, setSafetyMode] = useState('');
+const [customMessage, setCustomMessage] = useState('');
 
   useEffect(() => {
     const loadContacts = async () => {
       const saved = await AsyncStorage.getItem('emergencyContacts');
-      if (saved) setContacts(JSON.parse(saved));
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed[0]?.phone !== undefined) {
+            setContacts(parsed);
+          }
+        } catch {
+          setContacts([{ name: '', phone: '' }]);
+        }
+      }
     };
     loadContacts();
   }, []);
+    useEffect(() => {
+    const subscription = RNShake.addListener(() => {
+      ToastAndroid.show('Shake detected! Sending SOS...', ToastAndroid.SHORT);
+      triggerSOS();
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [contacts]);
+
+useFocusEffect(
+  useCallback(() => {
+    const fetchSafetyPreferences = async () => {
+      const user = auth().currentUser;
+      if (user) {
+        const userDoc = await firestore().collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          const data = userDoc.data();
+          setSafetyMode(data?.safetyMode ?? '');
+          setCustomMessage(data?.customMessage ?? '');
+        }
+      }
+    };
+
+    fetchSafetyPreferences();
+  }, [])
+);
 
   const saveContacts = async () => {
-    await AsyncStorage.setItem('emergencyContacts', JSON.stringify(contacts));
-    Alert.alert('Contacts saved');
+    const validContacts = contacts.filter(
+      (c) => c.name.trim() !== '' && /^\d{10}$/.test(c.phone.trim())
+    );
+    await AsyncStorage.setItem('emergencyContacts', JSON.stringify(validContacts));
+    setContacts(validContacts.length ? validContacts : [{ name: '', phone: '' }]);
+    Alert.alert('Contacts Saved', `${validContacts.length} contact(s) saved.`);
   };
 
   const requestPermissions = async () => {
     try {
-      const callGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CALL_PHONE
-      );
-      const smsGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.SEND_SMS
-      );
-      const readSmsGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_SMS
-      );
-      const locGranted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      );
-
-      return (
-        callGranted === PermissionsAndroid.RESULTS.GRANTED &&
-        smsGranted === PermissionsAndroid.RESULTS.GRANTED &&
-        readSmsGranted === PermissionsAndroid.RESULTS.GRANTED &&
-        locGranted === PermissionsAndroid.RESULTS.GRANTED
-      );
+      const callGranted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CALL_PHONE);
+      const smsGranted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.SEND_SMS);
+      const readSmsGranted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_SMS);
+      const locGranted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+      return callGranted === 'granted' && smsGranted === 'granted' && readSmsGranted === 'granted' && locGranted === 'granted';
     } catch (error) {
       console.warn('Permission error:', error);
       return false;
@@ -87,12 +125,8 @@ const EmergencyScreen = () => {
           try {
             const messages = JSON.parse(smsList);
             messages.sort((a, b) => b.date - a.date);
-            const rideMsg = messages.find(
-              (msg) =>
-                msg.body &&
-                (msg.body.toLowerCase().includes('ola') ||
-                  msg.body.toLowerCase().includes('uber') ||
-                  msg.body.toLowerCase().includes('rapido'))
+            const rideMsg = messages.find((msg) =>
+              ['ola', 'uber', 'rapido'].some((word) => msg.body.toLowerCase().includes(word))
             );
             if (rideMsg) {
               const vehicleMatch = rideMsg.body.match(/vehicle\s*number\s*[:\-]?\s*([A-Z0-9-]+)/i);
@@ -104,7 +138,7 @@ const EmergencyScreen = () => {
                 driverPhone: phoneMatch?.[1]?.trim() ?? 'Not Found',
               });
             } else {
-              resolve({ driverName: 'Not Found', vehicleNumber: 'Not Found', driverPhone: 'Not Found' });
+              resolve({ driverName: 'No..', vehicleNumber: 'No..', driverPhone: 'No' });
             }
           } catch (e) {
             reject('Error parsing SMS list');
@@ -114,182 +148,183 @@ const EmergencyScreen = () => {
     });
   };
 
-  const triggerSOS = async () => {
+
+const triggerSOS = async () => {
   try {
     const permsGranted = await requestPermissions();
-    if (!permsGranted) {
-      Alert.alert('Permissions Denied', 'All permissions are required.');
-      return;
-    }
+    if (!permsGranted) return Alert.alert('Permissions Denied', 'All permissions are required.');
 
     const coords = await getLocation();
     const rideDetails = await readRideDetailsFromSMS();
     Vibration.vibrate([500, 500, 500]);
 
-    const validContacts = contacts.filter(
-      num => num && num.trim().length >= 10 && /^\d+$/.test(num.trim())
-    );
+    const validContacts = contacts
+      .filter((c) => c.phone && /^\d{10}$/.test(c.phone))
+      .map((c) => c.phone);
 
     const locText = coords
       ? `https://maps.google.com/?q=${coords.latitude},${coords.longitude}`
       : 'Location not available';
 
     let phoneNumber = null;
-try {
-  const user = auth().currentUser;
-  if (!user) {
-    Alert.alert('Error', 'User not logged in.');
-    return;
-  }
+    const user = auth().currentUser;
+    if (user) {
+      const userDoc = await firestore().collection('users').doc(user.uid).get();
+      phoneNumber = userDoc.exists ? userDoc.data()?.phone : user.phoneNumber;
+    }
 
-  const userDoc = await firestore().collection('users').doc(user.uid).get();
-  if (userDoc.exists) {
-    phoneNumber = userDoc.data()?.phone ?? user.phoneNumber;
-  } else {
-    phoneNumber = user.phoneNumber;
-  }
+    const trackingURL = phoneNumber
+      ? `https://mysakhi.web.app/?phone=${phoneNumber}`
+      : 'Tracking URL Unavailable';
 
-  if (!phoneNumber) {
-    Alert.alert('Error', 'Phone number not found in profile.');
-    return;
-  }
-} catch (error) {
-  console.error("Failed to fetch phone number:", error);
-  Alert.alert("Error", "Unable to get your phone number");
-  return;
-}
+    
+    let customMsg = '';
+    try {
+      const pref = await AsyncStorage.getItem('sosPreferences');
+      if (pref) {
+        const parsed = JSON.parse(pref);
+        customMsg = parsed.message || '';
+        console.log('✅ Custom SOS Message:', customMsg);
+      }
+    } catch (e) {
+      console.log('⚠️ Failed to read sosPreferences:', e);
+    }
 
-    const trackingURL = `https://mysakhi.web.app/?phone=${phoneNumber}`;
 
-    const message = `Help! ${locText}\nDriver: ${rideDetails.driverName}\nVehicle: ${rideDetails.vehicleNumber}\nPhone: ${rideDetails.driverPhone}\nLive: ${trackingURL}`;
-
-    for (const numberRaw of validContacts) {
-      const number = numberRaw.trim().replace(/[^0-9]/g, '');
+    const message =   safetyMode === 'Ride' && customMessage?.trim() !== ''? `Mode:${safetyMode}\n${customMessage}\nHelp Me!!\n${locText}\nDriv: ${rideDetails.driverName}\nVech: ${rideDetails.vehicleNumber}\nMOB:${rideDetails.driverPhone}\nLive: ${trackingURL}` : `Mode: ${safetyMode}\n${customMessage}\nHelp! ${locText}\nLive: ${trackingURL}`;
+    
+    console.log("message length",message.length)
+    for (const number of validContacts) {
       try {
         await AutoSMS.sendSMS(number, message);
       } catch (e) {
-        console.error(`Failed to send SMS to ${number}:`, e);
+        console.error(`❌ Failed to send SMS to ${number}:`, e);
       }
     }
 
-    const callContact = async (index) => {
+       const callContact = async (index) => {
       if (index >= validContacts.length) return;
-      const number = validContacts[index].trim().replace(/[^0-9]/g, '');
       try {
-        await AutoCall.makeCall(number);
-      } catch (err) {
-        console.error(`AutoCall failed to ${number}:`, err.message);
+        await AutoCall.makeCall(validContacts[index]);
+      } catch (e) {
+        console.error(`❌ Call failed to ${validContacts[index]}:`, e);
       }
-      setTimeout(() => callContact(index + 1), 7000);
+      setTimeout(() => callContact(index + 1), 5000);
     };
-
     callContact(0);
 
-    // ✅ Start live location tracking with user's phone number
-    startLiveLocationTracking(phoneNumber)
+    if (phoneNumber) startLiveLocationTracking(phoneNumber);
 
-    Alert.alert('SOS Sent', 'Emergency alerts sent to contacts.');
-  } catch (err) {
-    console.error('🌋 Uncaught error in triggerSOS:', err);
+    Alert.alert('✅ SOS Sent', 'Emergency alerts sent to contacts.');
+  } catch (e) {
+    console.error('🚨 SOS ERROR:', e);
     Alert.alert('Error', 'Something went wrong during SOS.');
   }
 };
 
-
-  const triggerSafe = () => {
-    Vibration.vibrate(500);
-    Alert.alert('Safe', 'Safe message sent (simulated)');
+  const handleLongPress = () => {
+    setIsHoldingSOS(true);
+    Vibration.vibrate(50);
+    Animated.timing(sosProgress, {
+      toValue: 1,
+      duration: 3000,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) {
+        triggerSOS();
+        resetHold();
+      }
+    });
   };
 
-  const handleLongPress = (type) => {
-    const timerRef = type === 'sos' ? sosTimer : safeTimer;
-    timerRef.current = setTimeout(() => {
-      if (type === 'sos') triggerSOS();
-      else triggerSafe();
-    }, 10000);
+  const cancelLongPress = () => {
+    setIsHoldingSOS(false);
+    Animated.timing(sosProgress).stop();
+    sosProgress.setValue(0);
   };
 
-  const cancelLongPress = (type) => {
-    const timerRef = type === 'sos' ? sosTimer : safeTimer;
-    clearTimeout(timerRef.current);
+  const resetHold = () => {
+    setIsHoldingSOS(false);
+    sosProgress.setValue(0);
   };
+
+  const sosWidth = sosProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 125] });
 
   return (
     <View style={styles.fullScreen}>
-      {/* Background Lottie */}
-      <LottieView
-        source={require('../assets/homebg.json')}
-        autoPlay
-        loop
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-        ref={backgroundAnim}
-      />
-
+      <LottieView source={require('../assets/homebg.json')} autoPlay loop style={StyleSheet.absoluteFill} resizeMode="cover" ref={backgroundAnim} />
       <ScrollView contentContainerStyle={styles.overlay}>
-        {/* Header Animation */}
-        <LottieView
-          source={require('../assets/danger.json')}
-          autoPlay
-          loop
-          style={styles.headerAnimation}
-        />
-
-        <Text style={styles.mainHeading}>Are you in Danger?</Text>
+        <LottieView source={require('../assets/danger.json')} autoPlay loop style={styles.headerAnimation} />
+        <Text style={styles.mainHeading}>Are you in Danger<Text style={{ color: '#ef1e1e', fontSize: 36 }}>?</Text></Text>
         <Text style={styles.subHeading}>Save your contacts and alert them in emergencies</Text>
-        <LottieView
-          source={require('../assets/cab.json')}
-          autoPlay
-          loop
-          style={styles.headerAnimation}
-        />
 
-        {contacts.map((num, index) => (
-          <TextInput
-            key={index}
-            style={styles.input}
-            keyboardType="phone-pad"
-            placeholder={`Contact ${index + 1}`}
-            value={num}
-            onChangeText={(text) => {
-              const newContacts = [...contacts];
-              newContacts[index] = text;
-              setContacts(newContacts);
-            }}
-          />
-        ))}
+       
+
+        {contacts.map((contact, index) => (
+  <View key={index} style={styles.contactCard}>
+    <View style={styles.contactCardHeader}>
+      <Text style={styles.contactLabel}>Emergency Contact {index + 1}</Text>
+      {contacts.length > 1 && (
+        <TouchableOpacity
+          onPress={() =>
+            setContacts(contacts.filter((_, i) => i !== index))
+          }
+          style={styles.deleteIconBtn}
+        >
+          <Icon name="delete" size={22} color="#b71c1c" />
+        </TouchableOpacity>
+      )}
+    </View>
+
+    <TextInput
+      style={styles.contactInput}
+      placeholder="Full Name (e.g., Mom)"
+      placeholderTextColor="#187e72ff"
+      value={contact.name}
+      onChangeText={(text) =>
+        setContacts(contacts.map((c, i) => (i === index ? { ...c, name: text } : c)))
+      }
+    />
+    <TextInput
+      style={styles.contactInput}
+      placeholder="Phone Number (10 digits)"
+      placeholderTextColor="#197066ff"
+      keyboardType="phone-pad"
+      maxLength={10}
+      value={contact.phone}
+      onChangeText={(text) =>
+        setContacts(contacts.map((c, i) => (i === index ? { ...c, phone: text } : c)))
+      }
+    />
+  </View>
+))}
+
+
+        {contacts.length < 3 && (
+          <TouchableWithoutFeedback onPress={() => setContacts([...contacts, { name: '', phone: '' }])}>
+      <View style={styles.addBtn}>
+        <Icon name="add" size={22} color="#fff" />
+        <Text style={styles.addText}>Add Contact</Text>
+      </View>
+          </TouchableWithoutFeedback>
+        )}
 
         <TouchableWithoutFeedback onPress={saveContacts}>
-          <View style={styles.saveBtn}>
-            <Text style={styles.saveText}>Save Contacts</Text>
-          </View>
+          <View style={styles.saveBtn}><Text style={styles.saveText}>Save Contacts</Text></View>
         </TouchableWithoutFeedback>
+      <Text style={{ fontSize: 16, color: '#ffffffee', marginBottom: 10 }}>
+        Selected Mode: <Text style={{ fontWeight: 'bold', color: '#00f7f7' ,fontSize:18 }}>{safetyMode || 'None'}</Text>
+      </Text>
 
-        {/* SOS Lottie (acts like a button) */}
-        <TouchableWithoutFeedback
-          onPressIn={() => handleLongPress('sos')}
-          onPressOut={() => cancelLongPress('sos')}
-        >
-          <LottieView
-            source={require('../assets/sos.json')}
-            autoPlay
-            loop
-            style={styles.actionButton}
-          />
-        </TouchableWithoutFeedback>
-
-        {/* SAFE Lottie (acts like a button) */}
-        <TouchableWithoutFeedback
-          onPressIn={() => handleLongPress('safe')}
-          onPressOut={() => cancelLongPress('safe')}
-        >
-          <LottieView
-            source={require('../assets/safe.json')}
-            autoPlay
-            loop
-            style={styles.actionButton}
-          />
-        </TouchableWithoutFeedback>
+        <View style={styles.sosContainer}>
+          <TouchableWithoutFeedback onPressIn={handleLongPress} onPressOut={cancelLongPress}>
+            <View style={styles.lottieWrapper}>
+              <LottieView source={require('../assets/sos.json')} autoPlay loop style={styles.actionButton} />
+              {isHoldingSOS && <View style={styles.horizontalTank}><Animated.View style={[styles.fillBar, { width: sosWidth }]} /></View>}
+            </View>
+          </TouchableWithoutFeedback>
+          <Text style={styles.sosHintText}>{isHoldingSOS ? 'Holding...' : 'Hold to Activate SOS'}</Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -299,55 +334,127 @@ export default EmergencyScreen;
 
 const styles = StyleSheet.create({
   fullScreen: {
-    flex: 1,
-    backgroundColor: '#000', // fallback background
+     flex: 1,
+     backgroundColor: '#000'
   },
-  overlay: {
+  overlay: { 
     flexGrow: 1,
     padding: 24,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   headerAnimation: {
     width: 200,
     height: 200,
-    marginBottom: 10,
+    marginBottom: 10
   },
   mainHeading: {
     fontSize: 26,
     fontWeight: 'bold',
     color: '#fff',
-    textAlign: 'center',
+    textAlign: 'center'
   },
   subHeading: {
     fontSize: 16,
-    color: '#eee',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#cadbd9ff',
+    marginBottom: 25,
+    textAlign: 'center'
   },
-  input: {
-    backgroundColor: '#fff',
-    width: '90%',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+  contactCard: {
+    backgroundColor: '#ffffff2d',
+    borderRadius: 12, padding: 16,
+    marginBottom: 30, width: '100%',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor:'#ffffff30',
+    position: 'relative'
   },
-  saveBtn: {
-    backgroundColor: '#00796b',
-    padding: 12,
+  contactLabel: {
+    color: '#fff',
+    marginBottom: 6, 
+    fontWeight: 'bold',
+    fontSize: 16 },
+  contactInput: {
+    backgroundColor: '#fff',
     borderRadius: 8,
-    marginBottom: 20,
-    width: '60%',
+    padding: 11,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    color: '#000'
   },
-  saveText: {
+   contactCardHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 6,
+},
+deleteIconBtn: {
+  backgroundColor: '#fff1f1',
+  padding: 6,
+  borderRadius: 6,
+},
+addText: {
     color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
+    fontSize: 16 
+  },
+addBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#16549bff',
+  padding: 10,
+  borderRadius: 8,
+  marginBottom: 16,
+  width: '55%',
+  gap: 6, 
+},
+saveBtn: {
+    backgroundColor: '#00796b',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: '60%' },
+  saveText: {
+    color: '#fff',
+     textAlign: 'center',
+     fontWeight: 'bold',
+     fontSize: 18 },
+  sosContainer: {
+    alignItems: 'center',
+    marginVertical: 25
+  },
+  lottieWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   actionButton: {
-    width: width * 0.6,
-    height: 120,
-    marginBottom: 20,
+    width: 150,
+    height: 150
+  },
+  horizontalTank: {
+    width: 130,
+    height: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ffffff60',
+    backgroundColor: '#ffffffdf',
+    overflow: 'hidden',
+    marginTop: 10,
+    alignSelf: 'center'
+   },
+  fillBar: {
+    height: '100%',
+    backgroundColor: '#4fc3f7',
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20
+  },
+  sosHintText: {
+    marginTop: 10,
+    fontSize: 15,
+    color: '#ccc'
   },
 });
+
+
