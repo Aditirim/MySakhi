@@ -105,7 +105,7 @@ const NewsScreen = () => {
 
       {/* Main Content */}
       <ScrollView style={styles.container}>
-        <Text style={styles.header}>SheSafe: Women Safety News</Text>
+        <Text style={styles.header}>Women Safety News</Text>
 
         {/* Search Bar */}
         <View style={styles.searchBar}>
