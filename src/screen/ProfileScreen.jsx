@@ -9,18 +9,21 @@ import {
   ScrollView,
   Switch,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import womanAvatar from '../assets/logo.png'; 
+import womanAvatar from '../assets/logo.png';
 
 const ProfileScreen = ({ navigation }) => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [rideMonitoring, setRideMonitoring] = useState(false);
   const [notifications, setNotifications] = useState(false);
+  const [safetyMode, setSafetyMode] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,6 +41,8 @@ const ProfileScreen = ({ navigation }) => {
           setProfileData(data);
           setRideMonitoring(data?.rideMonitoring ?? false);
           setNotifications(data?.notifications ?? false);
+          setSafetyMode(data?.safetyMode ?? '');
+          setCustomMessage(data?.customMessage ?? '');
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -89,6 +94,22 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  const handleSaveSafetyPreferences = async () => {
+    const user = auth().currentUser;
+    if (!user) return;
+
+    try {
+      await firestore().collection('users').doc(user.uid).update({
+        safetyMode,
+        customMessage,
+      });
+      Alert.alert("Saved", "Safety preferences updated");
+    } catch (error) {
+      console.error("Error saving safety preferences:", error);
+      Alert.alert("Error", "Failed to save preferences");
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -101,52 +122,24 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.profileCard}>
-  <TouchableOpacity
-    style={styles.editIconTopRight}
-    onPress={() => navigation.navigate("EditProfile")}
-  >
-    <Ionicons name="create-outline" size={26} color="#003b2fff" />
-  </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.editIconTopRight}
+          onPress={() => navigation.navigate("EditProfile")}
+        >
+          <Ionicons name="create-outline" size={26} color="#003b2fff" />
+        </TouchableOpacity>
 
- <Image source={womanAvatar} style={styles.avatarLarge} />
-
-
-  <Text style={styles.profileName}>{profileData?.name ?? 'Your Name'}</Text>
-  <Text style={styles.profileEmail}>{profileData?.email ?? auth().currentUser?.email}</Text>
-  <Text style={styles.profileEmail}>{profileData?.phone ?? auth().currentUser?.email}</Text>
-  </View>
+        <Image source={womanAvatar} style={styles.avatarLarge} />
+        <Text style={styles.profileName}>{profileData?.name ?? 'Your Name'}</Text>
+        <Text style={styles.profileEmail}>{profileData?.email ?? auth().currentUser?.email}</Text>
+      </View>
 
 
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.iconTitleRow}>
-    <Ionicons name="call-outline" size={21} color="#374151" style={{ marginRight: 6 ,marginBottom: 6}} />
-    <Text style={styles.sectionTitle}>Emergency Contacts</Text>
-    </View>
-         <TouchableOpacity
-      onPress={() => navigation.navigate('EditEmergencyContacts')}
-      style={styles.editIconBtn}
-    >
-      <Ionicons name="create-outline" size={22} color="#001a1cff" />
-    </TouchableOpacity>
-
+        <View style={styles.iconTitleRow}>
+          <Ionicons name="settings-outline" size={20} color="#374151" style={{ marginRight: 6, marginBottom: 8 }} />
+          <Text style={styles.sectionTitle}>Preferences</Text>
         </View>
-      <View style={styles.itemRow}>
-          <Ionicons name="location-outline" size={18} color="#374151" style={{ marginRight: 8,marginBottom:8 }} />
-          <Text style={styles.itemText}>Home Address: <Text >Sector-52, Noida</Text></Text>
-        </View>
-        <View style={styles.itemRow}>
-          <Ionicons name="person-outline" size={18} color="#374151" style={{ marginRight: 8 }} />
-          <Text style={styles.itemText}>Phone No: {profileData?.gender ?? '9843673421'}</Text>
-      </View>
-
-      </View>
-
-      <View style={styles.section}>
-          <View style={styles.iconTitleRow}>
-      <Ionicons name="settings-outline" size={20} color="#374151" style={{ marginRight: 6 ,marginBottom: 8 }} />
-      <Text style={styles.sectionTitle}>Preferences</Text>
-    </View>
 
         <View style={styles.switchRow}>
           <Text style={styles.switchLabel}>Ride Monitoring</Text>
@@ -156,6 +149,7 @@ const ProfileScreen = ({ navigation }) => {
             thumbColor={rideMonitoring ? "#00796b" : "#ccc"}
           />
         </View>
+
         <View style={styles.switchRow}>
           <Text style={styles.switchLabel}>Notifications</Text>
           <Switch
@@ -164,19 +158,99 @@ const ProfileScreen = ({ navigation }) => {
             thumbColor={notifications ? "#00796b" : "#ccc"}
           />
         </View>
-            <View style={styles.itemRow}>
-        <Ionicons name="language-outline" size={18} color="#374151" style={{ marginRight: 8 ,marginBottom: 8 }} />
-        <Text style={styles.itemText}>Language: English ▼</Text>
+
+        <View style={styles.itemRow}>
+          <Ionicons name="language-outline" size={18} color="#374151" style={{ marginRight: 8, marginBottom: 8 }} />
+          <Text style={styles.itemText}>Language: English ▼</Text>
+        </View>
       </View>
 
+     
+      <View style={styles.section}>
+        <View style={styles.iconTitleRow}>
+          <Ionicons name="shield-checkmark-outline" size={20} color="#374151" style={{ marginRight: 6, marginBottom: 8 }} />
+          <Text style={styles.sectionTitle}>Safety Preferences</Text>
+        </View>
+
+        <Text style={styles.itemText}>Set SOS Behavior Based on Mode:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
+          {['Ride', 'Walking Alone', 'Night Shift', 'Hostel', 'Stealth Mode'].map((mode, idx) => (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => setSafetyMode(mode)}
+              style={{
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                backgroundColor: safetyMode === mode ? '#01787aff' : '#e0f7fa',
+                borderRadius: 20,
+                marginRight: 10,
+              }}
+            >
+              <Text style={{ color: safetyMode === mode ? '#fff' : '#00796b', fontWeight: '500' }}>
+                {mode}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <Text style={styles.itemText}>Custom SOS Message:</Text>
+        <TextInput
+          style={{
+            backgroundColor: '#f0f0f0',
+            borderRadius: 10,
+            padding: 10,
+            color: '#222',
+            marginBottom: 10,
+          }}
+          placeholder="I need help! I'm currently in..."
+          value={customMessage}
+          onChangeText={setCustomMessage}
+          multiline
+          numberOfLines={3}
+        />
+
+        <TouchableOpacity
+          onPress={handleSaveSafetyPreferences}
+          style={{
+            backgroundColor: '#00796b',
+            paddingVertical: 10,
+            borderRadius: 10,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Save Preferences</Text>
+        </TouchableOpacity>
       </View>
 
-            <View style={styles.section}>
-            <View style={styles.iconTitleRow}>
-        <Ionicons name="lock-closed-outline" size={20} color="#374151" style={{ marginRight: 4,marginBottom: 10 }} />
-        <Text style={styles.sectionTitle}>Security</Text>
+
+ <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.iconTitleRow}>
+            <Ionicons name="call-outline" size={21} color="#374151" style={{ marginRight: 6, marginBottom: 6 }} />
+            <Text style={styles.sectionTitle}>Emergency Contacts</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditEmergencyContacts')}
+            style={styles.editIconBtn}
+          >
+            <Ionicons name="create-outline" size={22} color="#001a1cff" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.itemRow}>
+          <Ionicons name="location-outline" size={18} color="#374151" style={{ marginRight: 8, marginBottom: 8 }} />
+          <Text style={styles.itemText}>Home Address: <Text>Sector-52, Noida</Text></Text>
+        </View>
+        <View style={styles.itemRow}>
+          <Ionicons name="person-outline" size={18} color="#374151" style={{ marginRight: 8 }} />
+          <Text style={styles.itemText}>Phone No: {profileData?.gender ?? '9843673421'}</Text>
+        </View>
       </View>
 
+      <View style={styles.section}>
+        <View style={styles.iconTitleRow}>
+          <Ionicons name="lock-closed-outline" size={20} color="#374151" style={{ marginRight: 4, marginBottom: 10 }} />
+          <Text style={styles.sectionTitle}>Security</Text>
+        </View>
         <TouchableOpacity onPress={() => navigation.navigate("ChangePassword")}>
           <Text style={styles.link}>Change Password</Text>
         </TouchableOpacity>
@@ -186,11 +260,10 @@ const ProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.section}>
-            <View style={styles.iconTitleRow}>
-      <Ionicons name="information-circle-outline" size={22} color="#374151" style={{ marginRight: 5,marginBottom:8 }} />
-      <Text style={styles.sectionTitle}>About SheRaksha</Text>
-    </View>
-
+        <View style={styles.iconTitleRow}>
+          <Ionicons name="information-circle-outline" size={22} color="#374151" style={{ marginRight: 5, marginBottom: 8 }} />
+          <Text style={styles.sectionTitle}>About SheRaksha</Text>
+        </View>
         <TouchableOpacity onPress={() => Alert.alert("Support", "Contact us at support@sheraksha.com")}>
           <Text style={styles.link}>Contact Support</Text>
         </TouchableOpacity>
@@ -232,14 +305,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   avatarLarge: {
-  width: 120,
-  height: 120,
-  borderRadius: 75,
-  marginBottom: 14,
-  borderColor: '#026f62ff', 
-  borderWidth: 3,          
-},
-
+    width: 120,
+    height: 120,
+    borderRadius: 75,
+    marginBottom: 14,
+    borderColor: '#026f62ff',
+    borderWidth: 3,
+  },
   profileName: {
     fontSize: 20,
     fontWeight: "700",
@@ -248,7 +320,7 @@ const styles = StyleSheet.create({
   },
   profileEmail: {
     fontSize: 15,
-    fontWeight:500,
+    fontWeight: "500",
     color: "#424244ff",
   },
   section: {
@@ -270,18 +342,16 @@ const styles = StyleSheet.create({
     color: "#374151",
     marginBottom: 8,
   },
- 
   itemText: {
     fontSize: 15,
-    fontWeight:400,
+    fontWeight: "400",
     color: "#29364aff",
     marginBottom: 8,
   },
   link: {
     color: "#1f19caa8",
-    // fontWeight: "500",
-    fontSize:16,
-    marginBottom:8,
+    fontSize: 16,
+    marginBottom: 8,
   },
   switchRow: {
     flexDirection: "row",
@@ -292,7 +362,7 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 15,
     color: "#242f3fff",
-    fontWeight:400,
+    fontWeight: "400",
   },
   logoutButton: {
     marginTop: 10,
@@ -312,22 +382,21 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   editIconTopRight: {
-  position: 'absolute',
-  top: 12,
-  right: 12,
-  padding: 6,
-  borderRadius: 30,
-  zIndex: 10,
-},
-iconTitleRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginBottom: 4,
-},
-itemRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginBottom: 8,
-},
-
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 6,
+    borderRadius: 30,
+    zIndex: 10,
+  },
+  iconTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
 });
