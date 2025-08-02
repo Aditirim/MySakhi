@@ -105,7 +105,7 @@ const NewsScreen = () => {
 
       {/* Main Content */}
       <ScrollView style={styles.container}>
-        <Text style={styles.header}>Women Safety News</Text>
+        <Text style={styles.header}> Women Safety News</Text>
 
         {/* Search Bar */}
         <View style={styles.searchBar}>
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#00695c',
+    color: '#01aa96ff',
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginLeft: 8,
-    backgroundColor: '#00695c',
+    backgroundColor: '#01aa96ff',
     paddingHorizontal: 18,
     borderRadius: 10,
     justifyContent: 'center',
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   subHeader: {
-    color: '#00897b',
+    color: '#01aa96ff',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
