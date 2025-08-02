@@ -196,7 +196,7 @@ const ProfileScreen = ({ navigation }) => {
         <Text style={styles.itemText}>Custom SOS Message:</Text>
         <TextInput
           style={{
-            backgroundColor: '#f0f0f0',
+            backgroundColor: '#eaefeeff',
             borderRadius: 10,
             padding: 10,
             color: '#222',
