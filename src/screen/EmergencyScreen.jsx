@@ -191,16 +191,20 @@ const triggerSOS = async () => {
     }
 
 
-    const message =   safetyMode === 'Ride' && customMessage?.trim() !== ''? `Mode:${safetyMode}\n${customMessage}\nHelp Me!!\n${locText}\nDriv: ${rideDetails.driverName}\nVech: ${rideDetails.vehicleNumber}\nMOB:${rideDetails.driverPhone}\nLive: ${trackingURL}` : `Mode: ${safetyMode}\n${customMessage}\nHelp! ${locText}\nLive: ${trackingURL}`;
+    const message =   safetyMode === 'Ride' && customMessage?.trim() !== ''? `Help! ${customMessage}\n${locText}\nDriv: ${rideDetails.driverName}\nVech: ${rideDetails.vehicleNumber}\nMOB: ${rideDetails.driverPhone}\nLive:\n${trackingURL}` : `Help!!\nMode: ${safetyMode}\n${customMessage}\nLocation:\n${locText}\n Live Track:\n${trackingURL}`;
     
+    // const message = `Help!\n${customMessage}\n${locText}\nDriv: ${rideDetails.driverName}\nVehicle: ${rideDetails.vehicleNumber}\nMOB: ${rideDetails.driverPhone}\nLive: ${trackingURL}`;
     console.log("message length",message.length)
     for (const number of validContacts) {
       try {
+        console.log("message: " ,message)
         await AutoSMS.sendSMS(number, message);
       } catch (e) {
         console.error(`❌ Failed to send SMS to ${number}:`, e);
       }
     }
+
+
 
        const callContact = async (index) => {
       if (index >= validContacts.length) return;
