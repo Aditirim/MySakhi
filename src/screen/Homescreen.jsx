@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState ,useRef} from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   TextInput,
   Pressable,
   ImageBackground,
+  Animated,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SmsAndroid from 'react-native-get-sms-android';
@@ -30,6 +31,11 @@ const Homescreen = () => {
   const [location, setLocation] = useState(null);
   const [showManualForm, setShowManualForm] = useState(false);
   const [mapRegion, setMapRegion] = useState(null);
+  const [showLabel, setShowLabel] = useState(true);
+
+
+  const rotation = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const loadContacts = async () => {
@@ -179,15 +185,51 @@ const Homescreen = () => {
       return;
     }
     Alert.alert('Success', 'Details filled manually.');
+    
     setShowManualForm(false);
-  };
 
+     rotation.setValue(0);
+  fadeAnim.setValue(1);
+  setShowLabel(true);
+  };
+const toggleManualForm = () => {
+  if (!showManualForm) {
+    
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowLabel(false); 
+    });
+  } else {
+     setShowLabel(true);
+    fadeAnim.setValue(1); 
+  }
+  Animated.timing(rotation, {
+    toValue: showManualForm ? 0 : 1,
+    duration: 200,
+    useNativeDriver: true,
+  }).start();
+
+  setShowManualForm(!showManualForm);
+};
+
+
+
+const rotateInterpolate = rotation.interpolate({
+  inputRange: [0, 1],
+  outputRange: ['0deg', '45deg'],
+});
+const animatedStyle = {
+  transform: [{ rotate: rotateInterpolate }],
+};
   return (
     <View style={styles.fullContainer}>
       <LottieView source={require('../assets/homebg.json')} autoPlay loop style={styles.bgLottie} />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.menuRow}>
-          <Text style={styles.slideText}>Slide it</Text>
+          <Text style={styles.slideText}>Menu</Text>
           <LottieView source={require('../assets/slide.json')} autoPlay loop style={styles.menuLottie} />
         </View>
 
@@ -211,24 +253,81 @@ const Homescreen = () => {
           <Text style={styles.fetchButtonText}> Fetch Latest Ride Details</Text>
         </TouchableOpacity>
 
-        <LottieView source={require('../assets/million.json')} autoPlay loop style={styles.iconLottie} />
 
-        <TouchableOpacity onPress={() => setShowManualForm(!showManualForm)} style={styles.plusButton}>
-          <MaterialIcons name="add-circle" size={28} color="#00796b" />
+<View style={styles.fabContainer}>
+  <TouchableOpacity onPress={toggleManualForm} style={styles.fab}>
+    <Animated.View style={animatedStyle}>
+      <MaterialIcons name="add" size={28} color="#fff" />
+    </Animated.View>
+  </TouchableOpacity>
+
+ {showLabel && (
+  <Animated.Text style={[styles.fabLabel, { opacity: fadeAnim }]}>
+    Add Manual Ride
+  </Animated.Text>
+)}
+
+</View>
+
+
+
+{showManualForm && (
+  <Pressable style={({ pressed }) => [styles.boxWrapper, pressed && styles.boxLift]}>
+    <ImageBackground
+      source={require('../assets/image.png')}
+      resizeMode="cover"
+      imageStyle={{ borderRadius: 16, opacity: 0.25 }}
+      style={styles.boxBackground}
+    >
+      <View style={styles.overlay}>
+        <Text style={styles.formTitle}>Manual Ride Entry</Text>
+        <View style={styles.inputWrapper}>
+          <MaterialIcons name="person" size={22} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Driver Name"
+            placeholderTextColor="#777"
+            value={driverName}
+            onChangeText={setDriverName}
+          />
+        </View>
+
+        <View style={styles.inputWrapper}>
+          <MaterialIcons name="directions-car" size={22} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Vehicle Number"
+            placeholderTextColor="#777"
+            value={vehicleNumber}
+            onChangeText={setVehicleNumber}
+          />
+        </View>
+
+        <View style={styles.inputWrapper}>
+          <MaterialIcons name="phone" size={22} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Driver Phone"
+            placeholderTextColor="#777"
+            value={driverPhone}
+            onChangeText={setDriverPhone}
+            keyboardType="phone-pad"
+          />
+        </View>
+
+        <TouchableOpacity style={styles.submitButton} onPress={handleManualSubmit}>
+          <Text style={styles.submitButtonText}>Submit</Text>
+
         </TouchableOpacity>
+      </View>
+    </ImageBackground>
+  </Pressable>
+)}
 
-        {showManualForm && (
-          <Pressable style={({ pressed }) => [styles.boxWrapper, pressed && styles.boxLift]}>
-            <ImageBackground source={require('../assets/image.png')} resizeMode="cover" imageStyle={{ borderRadius: 15, opacity:0.3 }} style={styles.boxBackground}>
-              <TextInput style={styles.input} placeholder="Driver Name" value={driverName} onChangeText={setDriverName} />
-              <TextInput style={styles.input} placeholder="Vehicle Number" value={vehicleNumber} onChangeText={setVehicleNumber} />
-              <TextInput style={styles.input} placeholder="Driver Phone" value={driverPhone} onChangeText={setDriverPhone} keyboardType="phone-pad" />
-              <TouchableOpacity style={styles.submitButton} onPress={handleManualSubmit}>
-                <Text style={styles.submitButtonText}>Submit</Text>
-              </TouchableOpacity>
-            </ImageBackground>
-          </Pressable>
-        )}
+
+
+
+        <LottieView source={require('../assets/million.json')} autoPlay loop style={styles.iconLottie} />
 
         <Pressable style={({ pressed }) => [styles.boxWrapper, pressed && styles.boxLift]}>
           <ImageBackground source={require('../assets/image.png')} resizeMode="cover" imageStyle={{ borderRadius: 15,    opacity:0.3}} style={styles.boxBackground}>
@@ -241,23 +340,6 @@ const Homescreen = () => {
             <Text style={styles.label}>
               <Ionicons name="call" size={18} color="#2196f3" /> Driver Phone: <Text style={styles.value}>{driverPhone || 'Awaiting'}</Text>
             </Text>
-          </ImageBackground>
-        </Pressable>
-
-        <Pressable style={({ pressed }) => [styles.boxWrapper, pressed && styles.boxLift]}>
-          <ImageBackground source={require('../assets/image.png')} resizeMode="cover" imageStyle={{ borderRadius: 15,    opacity:0.3 }} style={styles.boxBackground}>
-            <Text style={styles.contactsTitle}>
-              <MaterialIcons name="contacts" size={20} color="#e91e63" /> Emergency Contacts
-            </Text>
-            {contacts.length ? (
-              contacts.map((num, idx) => (
-                <Text key={idx} style={styles.contactItem}>
-                  <Ionicons name="person" size={16} color="#9c27b0" /> {idx + 1}. {num}
-                </Text>
-              ))
-            ) : (
-              <Text style={styles.contactItem}>No contacts saved</Text>
-            )}
           </ImageBackground>
         </Pressable>
 
@@ -289,18 +371,70 @@ const Homescreen = () => {
 export default Homescreen;
 
 const styles = StyleSheet.create({
-  fullContainer: { flex: 1, backgroundColor: '#eafcff' },
+  fullContainer: {
+    flex: 1,
+    backgroundColor: '#eafcff'
+  },
   bgLottie: { ...StyleSheet.absoluteFillObject },
-  container: { flexGrow: 1, padding: 20, alignItems: 'center' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginBottom: 15 },
-  slideText: { color: '#00796b', fontWeight: 'bold', fontSize: 20, fontFamily: 'monospace' },
-  menuLottie: { width: 70, height: 70 },
-  middleLottie: { width: 140, height: 140, marginBottom: 10 },
-  iconLottie: { width: 80, height: 80, marginBottom: 10 },
-  title: { fontSize: 40, fontWeight: '900', color: '#00796b', textAlign: 'center', fontFamily: 'serif' },
-  subtitle: { fontSize: 22, color: '#004d40', marginTop: 8, textAlign: 'center', fontStyle: 'italic', fontFamily: 'sans-serif-medium' },
-  slogan: { fontSize: 20, color: '#555', marginTop: 10, marginBottom: 10, textAlign: 'center', fontFamily: 'cursive' },
-  topLottie: { width: 160, height: 160, marginBottom: 15 },
+  container: { 
+    flexGrow: 1,
+    padding: 20,
+    alignItems: 'center'
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginBottom: 15
+  },
+  slideText: {
+    color: '#00796b',
+    fontWeight: 'bold',
+    fontSize: 20,
+    fontFamily: 'monospace'
+  },
+  menuLottie: {
+    width: 70,
+    height: 70
+  },
+  middleLottie: {
+    width: 140,
+     height: 140,
+     marginBottom: 10
+    },
+  iconLottie: {
+    width: 80,
+    height: 80,
+    marginBottom: 10
+  },
+  title: {
+    fontSize: 40,
+    fontWeight: '900',
+    color: '#00796b',
+    textAlign: 'center',
+    fontFamily: 'serif'
+  },
+  subtitle: {
+    fontSize: 22,
+    color: '#004d40',
+    marginTop: 8,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    fontFamily: 'sans-serif-medium'
+  },
+  slogan: {
+    fontSize: 20,
+    color: '#555',
+    marginTop: 10,
+    marginBottom: 10,
+    textAlign: 'center',
+    fontFamily: 'cursive'
+  },
+  topLottie: {
+    width: 160,
+    height: 160,
+    marginBottom: 15
+  },
   fetchButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -310,20 +444,55 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginBottom: 15,
   },
-  fetchButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginLeft: 8, fontFamily: 'sans-serif-condensed' },
+  fetchButtonText: { color: '#fff',
+     fontSize: 18,
+     fontWeight: 'bold',
+     marginLeft: 8,
+      fontFamily: 'sans-serif-condensed'
+    },
   plusButton: { marginBottom: 20 },
-  input: {
-    backgroundColor: '#f1fefe',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 15,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#00796b',
+  overlay: {
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    padding: 20,
+    borderRadius: 16,
   },
-  submitButton: { backgroundColor: '#00796b', padding: 14, borderRadius: 12, alignItems: 'center' },
-  submitButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
-  boxWrapper: { width: '100%', marginBottom: 25, borderRadius: 18 },
+  formTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#004d40',
+    fontFamily: 'serif',
+  },
+ input: {
+  flex: 1,
+  backgroundColor: '#ffffff',
+  borderRadius: 12,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  marginBottom: 15,
+  fontSize: 16,
+  borderWidth: 1,
+  borderColor: '#c8e6c9',
+  color: '#00332e',
+  fontFamily: 'sans-serif',
+  elevation: 2,
+},
+  submitButton: { 
+    backgroundColor: '#00796b',
+    padding: 14, borderRadius: 12,
+    alignItems: 'center'
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18
+  },
+  boxWrapper: {
+    width: '100%',
+    marginBottom: 25,
+    borderRadius: 18
+  },
   boxLift: {
     transform: [{ translateY: -6 }],
     shadowColor: '#000',
@@ -339,10 +508,28 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'rgba(255,255,255,0.92)',
   },
-  label: { fontSize: 20, color: '#1e1e1e', marginBottom: 10, fontFamily: 'Georgia' },
-  value: { fontWeight: '700', color: '#004d40', fontSize: 20, fontFamily: 'Courier New' },
-  contactsTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 14, color: '#00796b', fontFamily: 'Palatino' },
-  contactItem: { fontSize: 18, color: '#37474f', fontFamily: 'Verdana', marginBottom: 8 },
+  label: { fontSize: 20,
+    color: '#1e1e1e',
+    marginBottom: 10,
+     fontFamily: 'Georgia'
+    },
+  value: { fontWeight: '700',
+    color: '#004d40',
+    fontSize: 20,
+    fontFamily: 'Courier New'
+  },
+  contactsTitle: { fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 14, 
+    olor: '#00796b',
+    fontFamily: 'Palatino'
+  },
+  contactItem: {
+    fontSize: 18,
+    color: '#37474f',
+    fontFamily: 'Verdana',
+    marginBottom: 8
+  },
   mapContainer: {
     elevation: 10,
     width: '100%',
@@ -366,4 +553,54 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginBottom: 30,
   },
+
+fabContainer: {
+  marginTop: 16, 
+  alignItems: 'center',
+},
+fab: {
+  backgroundColor: '#00796b',
+  width: 46,
+  height: 46,
+  borderRadius: 28,
+  justifyContent: 'center',
+  alignItems: 'center',
+  elevation: 6,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+},
+fabLabel: {
+  marginTop: 6,
+  color: '#00796b',
+  fontSize: 18,
+  fontWeight: '600',
+  textAlign: 'center',
+  marginBottom:10,
+},
+  inputWrapper: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#fff',
+  paddingHorizontal: 8,
+  paddingVertical:3,
+  marginBottom: 12,
+  borderWidth: 2,
+  borderColor: '#c2e2dcff',
+  borderBottomLeftRadius: 10,
+  borderTopRightRadius: 10,
+},
+icon: {
+  marginRight: 8,
+  color: '#555',
+},
+input: {
+  flex: 1,
+  paddingVertical: 10,
+  fontSize: 16,
+  color: '#000',
+  borderColor: '#c8e6c9',
+  padding:5,
+},
 });
